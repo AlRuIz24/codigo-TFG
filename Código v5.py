@@ -439,56 +439,59 @@ np.random.seed(SEED)
 
 start_time = time.time()
 Gextra = G.subgraph(nodos_conexos_CTS)
-node2vec3 = Node2Vec(Gextra, 
-    dimensions=16,       # Dimensión del embedding (el mejor tras probar con varias muestras (128, 64, 32, 16, 8, 4, 2))
-    walk_length=80,       # Longitud de cada paseo aleatorio
-    num_walks=10,         # Número de paseos por nodo
-    p=1,                  # Parámetro de regreso (back)
-    q=1,                  # Parámetro de exploración (in-out)
-    workers=1,            # Número de procesos paralelos
-    weight_key=None,      # Si el grafo tiene pesos en las aristas
-    seed=SEED)               # Para reproducibilidad)
-model3 = node2vec3.fit(window=10, min_count=1, batch_words=4, seed = SEED)
-embeddings3 = model3.wv
+dim_values = [2,4,8,16,32,64,128]
+
+for i in dim_values:
+    node2vec3 = Node2Vec(Gextra, 
+        dimensions=i,       # Dimensión del embedding 
+        walk_length=80,       # Longitud de cada paseo aleatorio
+        num_walks=10,         # Número de paseos por nodo
+        p=1,                  # Parámetro de regreso (back)
+        q=1,                  # Parámetro de exploración (in-out)
+        workers=1,            # Número de procesos paralelos
+        weight_key=None,      # Si el grafo tiene pesos en las aristas
+        seed=SEED)            # Para reproducibilidad)
+    model3 = node2vec3.fit(window=10, min_count=1, batch_words=4, seed = SEED)
+    embeddings3 = model3.wv
+    
+    #Lo representamos en 2D usando PCA
+    nodos3 = embeddings3.index_to_key
+    E3 = [embeddings3[n] for n in sorted(nodos3)]
+
+    scaler = StandardScaler()
+    X_scaled=scaler.fit_transform(E3)
+    
+    pca3 = PCA(n_components=2, random_state= SEED)
+    X_pca=pca3.fit_transform(X_scaled)
+    expl = pca3.explained_variance_ratio_
+    print(sum(expl))
+
+    #Color
+    y_true = []
+    for node in sorted(nodos3):
+        y_true.append(grupos_mapextra[int(node)]) 
+        
+    #Dibujar scatter plot
+    plt.figure(figsize=(7,6))
+    plt.scatter(X_pca[:,0], X_pca[:,1], s=1, cmap= 'viridis', alpha=0.7, c=y_true)
+    plt.xlabel('Componente principal 1')
+    plt.ylabel('Componente principal 2')
+    plt.title('Embeddings Node2Vec (16→2 dim) mediante PCA')
+    plt.grid(True)
+    plt.show()
+        
+    plt.figure(figsize=(7,6))
+    plt.scatter(X_pca[:,0], X_pca[:,1], s=1, cmap= 'viridis', alpha=0.7)
+    plt.xlabel('Componente principal 1')
+    plt.ylabel('Componente principal 2')
+    plt.title('Embeddings Node2Vec (16→2 dim) mediante PCA')
+    plt.grid(True)
+    plt.show()
+    
 end_time = time.time()
 elapsed_time = end_time - start_time    
-print(f"Tiempo de ejecución Node to Vec 3 grupos: {elapsed_time:.4f} segundos")
+print(f"Tiempo de ejecución Node to Vec: {elapsed_time:.4f} segundos")
 
-
-#Tarda 10 minutos aprox
-#Lo representamos en 2D usando PCA
-nodos3 = embeddings3.index_to_key
-E3 = [embeddings3[n] for n in sorted(nodos3)]
-
-scaler = StandardScaler()
-X_scaled=scaler.fit_transform(E3)
-
-pca3 = PCA(n_components=2, random_state= SEED)
-X_pca=pca3.fit_transform(X_scaled)
-expl = pca3.explained_variance_ratio_
-print(sum(expl))
-
-#Color
-y_true = []
-for node in sorted(nodos3):
-    y_true.append(grupos_mapextra[int(node)]) 
-    
-#Dibujar scatter plot
-plt.figure(figsize=(7,6))
-plt.scatter(X_pca[:,0], X_pca[:,1], s=1, cmap= 'viridis', alpha=0.7, c=y_true)
-plt.xlabel('Componente principal 1')
-plt.ylabel('Componente principal 2')
-plt.title('Embeddings Node2Vec (16→2 dim) mediante PCA')
-plt.grid(True)
-plt.show()
-    
-plt.figure(figsize=(7,6))
-plt.scatter(X_pca[:,0], X_pca[:,1], s=1, cmap= 'viridis', alpha=0.7)
-plt.xlabel('Componente principal 1')
-plt.ylabel('Componente principal 2')
-plt.title('Embeddings Node2Vec (16→2 dim) mediante PCA')
-plt.grid(True)
-plt.show()
 
 ########################## Kmeans 3 grupos ##########################################
 
@@ -686,7 +689,7 @@ for i in range(len(best_configs)):
     nmi3 = normalized_mutual_info_score(y_true, best_labels)
     print("NMI:", nmi3)
 
-#♦Sólo voy a tomar el ari y nmi de los puntos que relamente ha clasificado (no de los que ha calificado como ruido)
+#Sólo voy a tomar el ari y nmi de los puntos que relamente ha clasificado (no de los que ha calificado como ruido)
 
 best_configs = [r for r in results if (r['n_clusters'] == 3 and r['min_samples'] == 300 and r['n_noise'] == 8905)]
 best_config = best_configs[0]
