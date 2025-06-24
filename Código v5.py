@@ -21,7 +21,7 @@ PYTHONHASHSEED=0
 ############################### LECTURA DE DATOS #################################################
 #Leer los datos del excel limpios
 # Ruta del archivo Excel
-archivo = "C:/Users/Famil/OneDrive - Universidad Complutense de Madrid (UCM)/4º Ingeniería matemática/TFG/Datosvf/Base datos/Datos_limpios.xlsx"
+archivo = "C:/Users/Famil/OneDrive - Universidad Complutense de Madrid (UCM)/4º Ingeniería matemática/TFG/Datosvf/Base datos/Nodos_CTS.xlsx"
 
 # Nombre de la hoja a leer
 hoja = "Nodos_CTS"
